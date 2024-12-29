@@ -2,6 +2,23 @@
 
 set -eo pipefail
 
+# Check for required commands
+if ! command -v curl >/dev/null 2>&1; then
+    echo "Error: curl is required but not installed. Please install curl first."
+    exit 1
+fi
+
+if ! command -v sha256sum >/dev/null 2>&1; then
+    echo "Error: sha256sum is required but not installed. Please install it first."
+    exit 1
+fi
+
+# Check for sudo/root
+if [ "$(id -u)" -ne 0 ] && ! command -v sudo >/dev/null 2>&1; then
+    echo "Error: This script requires sudo privileges. Please install sudo or run as root."
+    exit 1
+fi
+
 # Determine OS and architecture
 OS="$(uname | tr '[:upper:]' '[:lower:]')"
 ARCH="$(uname -m)"
@@ -37,11 +54,18 @@ sudo mkdir -p "${INSTALL_DIR}"
 # Set GitHub repository
 REPO="zacharyiles/gopilot"
 
-# Get latest version
+# Get latest version with better error handling
 echo "Fetching latest version..."
-VERSION=$(curl -sL "https://api.github.com/repos/${REPO}/releases/latest" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+RESPONSE=$(curl -sL "https://api.github.com/repos/${REPO}/releases/latest")
+if [[ $(echo "$RESPONSE" | grep -c "API rate limit exceeded") -ne 0 ]]; then
+    echo "Error: GitHub API rate limit exceeded. Please try again later."
+    exit 1
+fi
+
+VERSION=$(echo "$RESPONSE" | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
 if [ -z "${VERSION}" ]; then
     echo "Error: Could not determine latest version"
+    echo "API Response: $RESPONSE"
     exit 1
 fi
 

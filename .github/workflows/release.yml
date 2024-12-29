@@ -5,9 +5,13 @@ on:
     tags:
       - 'v*'
 
+concurrency:
+  group: "release-${{ github.ref }}"
+  cancel-in-progress: false
+
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         include:
@@ -39,6 +43,9 @@ jobs:
           go-version: '1.22.3'
           cache: true
           
+      - name: Clean dist
+        run: rm -rf dist || true
+      
       - name: Build
         env:
           GOOS: ${{ matrix.os }}
@@ -46,6 +53,7 @@ jobs:
           CGO_ENABLED: 0
         run: |
           VERSION=${GITHUB_REF#refs/tags/}
+          mkdir -p dist
           go build -trimpath -ldflags="-s -w -X main.Version=${VERSION}" -o "dist/gopilot-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.ext }}" ./cmd/main.go
           # Ensure Linux/macOS binaries are executable
           if [[ "${{ matrix.os }}" != "windows" ]]; then
@@ -54,7 +62,11 @@ jobs:
           
       - name: Generate checksum
         run: |
-          cd dist
+          cd dist || exit 1
+          if [ ! -f "gopilot-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.ext }}" ]; then
+            echo "Error: Binary file not found"
+            exit 1
+          fi
           sha256sum "gopilot-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.ext }}" > "gopilot-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.ext }}.sha256"
           
       - name: Upload artifacts
@@ -66,7 +78,7 @@ jobs:
 
   release:
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     permissions:
       contents: write
     steps:

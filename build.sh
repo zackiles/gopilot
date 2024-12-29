@@ -49,9 +49,11 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-# If no version specified, use git describe or default to dev
+# Improve version handling for git describe
 if [ -z "$VERSION" ]; then
-    if git describe --tags >/dev/null 2>&1; then
+    if git describe --exact-match --tags HEAD >/dev/null 2>&1; then
+        VERSION=$(git describe --exact-match --tags HEAD)
+    elif git describe --tags >/dev/null 2>&1; then
         VERSION=$(git describe --tags)
     else
         VERSION="dev"
@@ -64,11 +66,22 @@ go build -trimpath -ldflags="-s -w -X main.Version=${VERSION}" -o "${BINARY}" ./
 
 # If this is a release build
 if [ "$RELEASE" = true ]; then
-    if [[ ! $VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-        echo "Error: Release version must be in semver format (e.g., 1.0.0)"
+    # Check for clean working directory
+    if ! git diff-index --quiet HEAD --; then
+        echo "Error: Working directory is not clean. Please commit or stash changes first."
         exit 1
     fi
     
+    if [[ ! $VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        echo "Error: Release version must be in semver format (e.g., 1.0.0) without 'v' prefix"
+        exit 1
+    fi
+    
+    if git rev-parse "v${VERSION}" >/dev/null 2>&1; then
+        echo "Error: Tag v${VERSION} already exists"
+        exit 1
+    fi
+
     if [ -z "$TAG_MESSAGE" ]; then
         echo "Error: Tag message is required for release. Use -m or --message"
         exit 1
