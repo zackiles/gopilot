@@ -29,7 +29,7 @@ INSTALL_DIR="/usr/local/bin"
 sudo mkdir -p "$INSTALL_DIR"
 
 # Download latest release
-LATEST_RELEASE_URL="https://github.com/yourusername/gopilot/releases/latest/download/${BINARY_NAME}"
+LATEST_RELEASE_URL="https://github.com/zacharyiles/gopilot/releases/latest/download/${BINARY_NAME}"
 sudo curl -L "$LATEST_RELEASE_URL" -o "$INSTALL_DIR/gopilot"
 
 # Make binary executable

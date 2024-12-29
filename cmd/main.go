@@ -12,6 +12,17 @@ import (
 )
 
 func main() {
+	// Get the prompt first
+	args := os.Args
+	if len(args) < 2 {
+		fmt.Println("Error: Please provide a prompt")
+		os.Exit(1)
+	}
+	prompt := args[1]
+
+	// Remove prompt from args to parse remaining flags
+	os.Args = append([]string{args[0]}, args[2:]...)
+
 	// Define flags
 	streamFlag := flag.Bool("stream", false, "Stream the response")
 	sFlag := flag.Bool("s", false, "Stream the response (shorthand)")
@@ -46,9 +57,6 @@ func main() {
 
 	// Create chat session
 	session := chat.NewSession(cfg)
-
-	// Handle prompt
-	prompt := flag.Arg(0)
 
 	// Check if prompt is a file path
 	if _, err := os.Stat(prompt); err == nil {

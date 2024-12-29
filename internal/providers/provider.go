@@ -19,7 +19,7 @@ func New(providerName, apiKey, model string) (Provider, error) {
 		return NewAnthropic(apiKey, model)
 	case "cohere-ai":
 		return NewCohere(apiKey, model)
-	case "huggingface":
+	case "@huggingface/inference", "huggingface":
 		return NewHuggingFace(apiKey, model)
 	case "langchain":
 		return NewLangchain(apiKey, model)
