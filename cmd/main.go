@@ -37,12 +37,6 @@ func main() {
 
 	flag.Parse()
 
-	// Validate args
-	if len(flag.Args()) < 1 {
-		fmt.Println("Error: Please provide a prompt")
-		os.Exit(1)
-	}
-
 	// Use shorthand flag if main flag is empty
 	if *configFlag == "" && *cFlag != "" {
 		configFlag = cFlag

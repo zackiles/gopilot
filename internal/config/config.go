@@ -16,8 +16,6 @@ type Config struct {
 }
 
 func Load(configPath string) (*Config, error) {
-	cfg := &Config{}
-
 	// Try loading from specified config file
 	if configPath != "" {
 		return loadFromFile(configPath)
@@ -77,11 +75,21 @@ func loadFromDefaultFiles() (*Config, error) {
 }
 
 func loadFromEnv() *Config {
-	return &Config{
+	cfg := &Config{
 		Provider: os.Getenv("PROVIDER"),
 		APIKey:   os.Getenv("API_KEY"),
 		Model:    os.Getenv("MODEL"),
 	}
+
+	// Add defaults if values are empty
+	if cfg.Provider == "" {
+		cfg.Provider = "openai"
+	}
+	if cfg.Model == "" {
+		cfg.Model = "gpt-3.5-turbo"
+	}
+
+	return cfg
 }
 
 func loadDotEnv() error {
@@ -112,5 +120,6 @@ func loadDotEnv() error {
 }
 
 func isValidConfig(cfg *Config) bool {
-	return cfg.Provider != "" && cfg.APIKey != ""
+	// Only API key is truly required since we have defaults for other fields
+	return cfg.APIKey != ""
 }

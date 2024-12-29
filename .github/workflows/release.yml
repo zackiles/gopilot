@@ -1,0 +1,82 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - os: windows
+            arch: amd64
+            ext: .exe
+          - os: windows
+            arch: arm64
+            ext: .exe
+          - os: darwin
+            arch: amd64
+            ext: ''
+          - os: darwin
+            arch: arm64
+            ext: ''
+          - os: linux
+            arch: amd64
+            ext: ''
+          - os: linux
+            arch: arm64
+            ext: ''
+
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.22.3'
+          cache: true
+          
+      - name: Build
+        env:
+          GOOS: ${{ matrix.os }}
+          GOARCH: ${{ matrix.arch }}
+          CGO_ENABLED: 0
+        run: |
+          go build -trimpath -ldflags="-s -w -X main.Version=${GITHUB_REF#refs/tags/}" -o "dist/gopilot-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.ext }}" ./cmd/main.go
+          # Ensure Linux/macOS binaries are executable
+          if [[ "${{ matrix.os }}" != "windows" ]]; then
+            chmod +x "dist/gopilot-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.ext }}"
+          fi
+          
+      - name: Generate checksum
+        run: |
+          cd dist
+          sha256sum "gopilot-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.ext }}" > "gopilot-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.ext }}.sha256"
+          
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: binaries
+          path: dist/*
+          if-no-files-found: error
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: binaries
+          path: dist
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: dist/*
+          generate_release_notes: true
+          fail_on_unmatched_files: true 

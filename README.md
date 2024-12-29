@@ -4,43 +4,48 @@ GoPilot is a simple, Golang-based CLI tool for interacting with a variety of AI 
 
 ## Installing
 
+### Quick Install (Linux/macOS)
+
 To install the CLI, run the following command to download and execute the installation script:
 
-```
-curl -sSL https://github.com//install.sh | bash
+```bash
+curl -sSL https://github.com/zacharyiles/gopilot/raw/main/install.sh | bash
 ```
 
-This script will download the latest version of the CLI and place it in your system's PATH.
+This script will:
+- Detect your OS and architecture
+- Download the appropriate binary from the latest release
+- Verify the SHA256 checksum
+- Install it to `/usr/local/bin`
 
 ## Usage
 
 Interact with AI models via the CLI using a prompt. Chat history is maintained by default and stored on disk. Structured prompts or text-based files are automatically detected and handled accordingly.
 
-
 To run a basic prompt:
 
-```
-./gopilot "Write a short poem about AI."
+```bash
+gopilot "Write a short poem about AI."
 ```
 
 For structured prompts:
 
-```
-./gopilot '{"message": "Write a short poem about AI"}'
+```bash
+gopilot '{"message": "Write a short poem about AI"}'
 ```
 
 Using file input:
 
-```
-./gopilot /path/to/prompt.md
+```bash
+gopilot /path/to/prompt.md
 ```
 
 ### Options:
 
-Flags must be passed **after** the prompt. For example, you cannot use the command like `./gopilot -n "What's the weather today?"`. Instead, it should be:
+Flags must be passed **after** the prompt. For example, you cannot use the command like `gopilot -n "What's the weather today?"`. Instead, it should be:
 
-```
-./gopilot "What's the weather today?" -n
+```bash
+gopilot "What's the weather today?" -n
 ```
 
 Here are the available flags:
@@ -57,8 +62,8 @@ The tool will return the response from the model.
 
 Example:
 
-```
-$ ./gopilot "What's the weather today?"
+```bash
+$ gopilot "What's the weather today?"
 ```
 
 Response:
@@ -69,13 +74,13 @@ The weather today is sunny with a high of 25 degrees.
 
 For structured response:
 
-```
-$ ./gopilot '{"message": "What's the weather today?"}'
+```bash
+$ gopilot '{"message": "What's the weather today?"}'
 ```
 
 Response:
 
-```
+```json
 {
   "message": "What's the weather today?",
   "response": {
@@ -128,8 +133,8 @@ Configuration values can be set in one of the following ways:
 
    Example usage:
 
-   ```
-   ./gopilot --config /path/to/gopilot.config.json
+   ```bash
+   gopilot --config /path/to/gopilot.config.json
    ```
 
 Each configuration method is optional, and values provided through later methods will override any earlier settings.
@@ -144,12 +149,68 @@ Each configuration method is optional, and values provided through later methods
 - [cohere-ai](https://docs.cohere.ai/)
 - [openrouter](https://github.com/openrouter-ai/openrouter)
 
-## Open Questions
+## Development
+
+### Release Process
+
+GoPilot uses GitHub Actions to automatically build and release binaries for multiple platforms when a new tag is pushed. To create a new release:
+
+1. Tag the commit: `git tag -a v1.0.0 -m "Release v1.0.0"`
+2. Push the tag: `git push origin v1.0.0`
+
+The GitHub Action will automatically:
+- Build binaries for Windows, macOS, and Linux (both amd64 and arm64)
+- Generate SHA256 checksums for each binary
+- Create a GitHub release with all artifacts
+- Generate release notes
+
+### Open Questions
 
 1. How should complex JSON inputs (e.g., examples for classification) be handled in a CLI-friendly way?
 2. Should the CLI support multiple configuration files for different providers or workflows?
 3. How will the CLI gracefully handle rate-limiting or API errors across different providers?
 
+## Building from Source
+
+To build GoPilot from source:
+
+```bash
+git clone https://github.com/zacharyiles/gopilot
+cd gopilot
+go build -o gopilot ./cmd/main.go
+```
+
+For a release build with optimizations:
+```bash
+go build -trimpath -ldflags="-s -w" -o gopilot ./cmd/main.go
+```
+
+## Manual Installation
+
+1. Visit the [releases page](https://github.com/zacharyiles/gopilot/releases)
+2. Download the appropriate binary for your system:
+   - `gopilot-darwin-amd64` for Intel macOS
+   - `gopilot-darwin-arm64` for Apple Silicon macOS
+   - `gopilot-linux-amd64` for 64-bit Linux
+   - `gopilot-linux-arm64` for ARM64 Linux
+   - `gopilot-windows-amd64.exe` for 64-bit Windows
+   - `gopilot-windows-arm64.exe` for ARM64 Windows
+3. Verify the checksum (recommended):
+   ```bash
+   sha256sum -c gopilot-<os>-<arch>.sha256
+   ```
+4. Make the binary executable (Linux/macOS):
+   ```bash
+   chmod +x gopilot-<os>-<arch>
+   ```
+5. Move to a location in your PATH (Linux/macOS):
+   ```bash
+   sudo mv gopilot-<os>-<arch> /usr/local/bin/gopilot
+   ```
 ## Contribution
 
 Contributions are welcome. Please open an issue or pull request for any feature requests, bug fixes, or improvements.
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
