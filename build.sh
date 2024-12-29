@@ -6,6 +6,12 @@ VERSION=""
 TAG_MESSAGE=""
 RELEASE=false
 
+# Determine OS and set binary name
+BINARY="gopilot"
+if [[ "$OSTYPE" == "msys" ]] || [[ "$OSTYPE" == "win32" ]] || [[ "$OSTYPE" == "cygwin" ]]; then
+    BINARY="gopilot.exe"
+fi
+
 # Help message
 show_help() {
     echo "Usage: ./build.sh [options]"
@@ -54,7 +60,7 @@ fi
 
 # Build the binary with version information
 echo "Building GoPilot version ${VERSION}..."
-go build -trimpath -ldflags="-s -w -X main.Version=${VERSION}" -o gopilot ./cmd/main.go
+go build -trimpath -ldflags="-s -w -X main.Version=${VERSION}" -o "${BINARY}" ./cmd/main.go
 
 # If this is a release build
 if [ "$RELEASE" = true ]; then
