@@ -41,12 +41,20 @@ if [ "${OS}" = "windows" ]; then
 fi
 
 # Set installation directory based on OS
-if [ "${OS}" = "darwin" ] || [ "${OS}" = "linux" ]; then
-    INSTALL_DIR="/usr/local/bin"
-else
-    echo "Error: Unsupported operating system: ${OS}"
-    exit 1
-fi
+case "${OS}" in
+    linux|darwin)
+        INSTALL_DIR="/usr/local/bin"
+        ;;
+    msys*|cygwin*|mingw*|windows*)
+        OS="windows"
+        # Use the user's home directory AppData folder for Windows
+        INSTALL_DIR="${USERPROFILE}/AppData/Local/Microsoft/WindowsApps"
+        ;;
+    *)
+        echo "Error: Unsupported operating system: ${OS}"
+        exit 1
+        ;;
+esac
 
 # Create installation directory if needed
 sudo mkdir -p "${INSTALL_DIR}"

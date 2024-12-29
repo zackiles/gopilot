@@ -4,9 +4,9 @@ GoPilot is a simple, Golang-based CLI tool for interacting with a variety of AI 
 
 ## Installing
 
-### Quick Install (Linux/macOS)
+### Quick Install
 
-To install the CLI, run the following command to download and execute the installation script:
+To install the CLI, run the following command in your terminal:
 
 ```bash
 curl -sSL https://github.com/zacharyiles/gopilot/raw/main/install.sh | bash
@@ -16,7 +16,7 @@ This script will:
 - Detect your OS and architecture
 - Download the appropriate binary from the latest release
 - Verify the SHA256 checksum
-- Install it to `/usr/local/bin`
+- Install it to your system's appropriate location
 
 ## Usage
 
