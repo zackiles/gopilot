@@ -10,27 +10,29 @@ import (
 	"github.com/sashabaranov/go-openai"
 )
 
-type OpenAI struct {
+type OpenRouter struct {
 	client *openai.Client
 	model  string
 }
 
-func NewOpenAI(apiKey, model string) (*OpenAI, error) {
+func NewOpenRouter(apiKey, model string) (*OpenRouter, error) {
 	if model == "" {
-		model = "gpt-3.5-turbo"
+		model = "openai/gpt-3.5-turbo"
 	}
 
-	client := openai.NewClient(apiKey)
-	return &OpenAI{
+	config := openai.DefaultConfig(apiKey)
+	config.BaseURL = "https://openrouter.ai/api/v1"
+
+	client := openai.NewClientWithConfig(config)
+	return &OpenRouter{
 		client: client,
 		model:  model,
 	}, nil
 }
 
-func (o *OpenAI) Send(history []Message, message interface{}, stream bool) (string, error) {
+func (o *OpenRouter) Send(history []Message, message interface{}, stream bool) (string, error) {
 	messages := make([]openai.ChatCompletionMessage, len(history)+1)
 
-	// Convert history to OpenAI format
 	for i, msg := range history {
 		content := ""
 		switch v := msg.Content.(type) {
@@ -47,7 +49,6 @@ func (o *OpenAI) Send(history []Message, message interface{}, stream bool) (stri
 		}
 	}
 
-	// Add current message
 	content := ""
 	switch v := message.(type) {
 	case string:
@@ -67,16 +68,15 @@ func (o *OpenAI) Send(history []Message, message interface{}, stream bool) (stri
 	return o.handleSingleResponse(messages)
 }
 
-func (o *OpenAI) SupportsStreaming() bool {
+func (o *OpenRouter) SupportsStreaming() bool {
 	return true
 }
 
-func (o *OpenAI) HandleRateLimiting(err error) error {
-	// Implement exponential backoff if rate limited
+func (o *OpenRouter) HandleRateLimiting(err error) error {
 	return err
 }
 
-func (o *OpenAI) handleStreamingResponse(messages []openai.ChatCompletionMessage) (string, error) {
+func (o *OpenRouter) handleStreamingResponse(messages []openai.ChatCompletionMessage) (string, error) {
 	stream, err := o.client.CreateChatCompletionStream(
 		context.Background(),
 		openai.ChatCompletionRequest{
@@ -107,7 +107,7 @@ func (o *OpenAI) handleStreamingResponse(messages []openai.ChatCompletionMessage
 	return fullResponse.String(), nil
 }
 
-func (o *OpenAI) handleSingleResponse(messages []openai.ChatCompletionMessage) (string, error) {
+func (o *OpenRouter) handleSingleResponse(messages []openai.ChatCompletionMessage) (string, error) {
 	resp, err := o.client.CreateChatCompletion(
 		context.Background(),
 		openai.ChatCompletionRequest{

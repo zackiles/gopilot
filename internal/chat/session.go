@@ -61,9 +61,24 @@ func (s *Session) Send(input interface{}, opts Options) (string, error) {
 		})
 	}
 
-	response, err := s.provider.Send(input, opts.Stream)
+	messages := s.formatHistoryForProvider()
+
+	response, err := s.provider.Send(messages, input, opts.Stream)
 	if err != nil {
 		return "", err
+	}
+
+	// Try to detect if input was JSON and format response accordingly
+	if _, ok := input.(map[string]interface{}); ok {
+		responseObj := map[string]interface{}{
+			"message":  input,
+			"response": response,
+		}
+		jsonResponse, err := json.MarshalIndent(responseObj, "", "  ")
+		if err != nil {
+			return response, nil
+		}
+		response = string(jsonResponse)
 	}
 
 	if !opts.OneShot {
@@ -101,4 +116,15 @@ func (s *Session) saveHistory() {
 	}
 
 	os.WriteFile(s.historyFile, data, 0644)
+}
+
+func (s *Session) formatHistoryForProvider() []providers.Message {
+	messages := make([]providers.Message, len(s.history))
+	for i, msg := range s.history {
+		messages[i] = providers.Message{
+			Role:    msg.Role,
+			Content: msg.Content,
+		}
+	}
+	return messages
 }

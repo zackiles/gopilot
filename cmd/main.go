@@ -32,6 +32,11 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Use shorthand flag if main flag is empty
+	if *configFlag == "" && *cFlag != "" {
+		configFlag = cFlag
+	}
+
 	// Load configuration
 	cfg, err := config.Load(*configFlag)
 	if err != nil {
@@ -44,6 +49,17 @@ func main() {
 
 	// Handle prompt
 	prompt := flag.Arg(0)
+
+	// Check if prompt is a file path
+	if _, err := os.Stat(prompt); err == nil {
+		content, err := os.ReadFile(prompt)
+		if err != nil {
+			fmt.Printf("Error reading file: %v\n", err)
+			os.Exit(1)
+		}
+		prompt = string(content)
+	}
+
 	var input interface{}
 
 	// Try to parse as JSON
