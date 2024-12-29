@@ -11,21 +11,13 @@ import (
 	"gopilot/internal/config"
 )
 
-var Version = "0.0.1"
+// Version is set during build via ldflags
+var Version string
 
 func main() {
-	// Get the prompt first
-	args := os.Args
-	if len(args) < 2 {
-		fmt.Println("Error: Please provide a prompt")
-		os.Exit(1)
-	}
-	prompt := args[1]
-
-	// Remove prompt from args to parse remaining flags
-	os.Args = append([]string{args[0]}, args[2:]...)
-
 	// Define flags
+	versionFlag := flag.Bool("version", false, "Show version information")
+	vFlag := flag.Bool("v", false, "Show version information (shorthand)")
 	streamFlag := flag.Bool("stream", false, "Stream the response")
 	sFlag := flag.Bool("s", false, "Stream the response (shorthand)")
 	newFlag := flag.Bool("new", false, "Start new chat history")
@@ -38,6 +30,26 @@ func main() {
 	cFlag := flag.String("c", "", "Configuration file path (shorthand)")
 
 	flag.Parse()
+
+	// Show version if requested
+	if *versionFlag || *vFlag {
+		if Version == "" {
+			Version = "dev"
+		}
+		fmt.Printf("gopilot version %s\n", Version)
+		os.Exit(0)
+	}
+
+	// Get the prompt first
+	args := flag.Args()
+	if len(args) < 1 {
+		fmt.Println("Error: Please provide a prompt")
+		os.Exit(1)
+	}
+	prompt := args[0]
+
+	// Remove prompt from args to parse remaining flags
+	os.Args = append([]string{args[0]}, args[1:]...)
 
 	// Use shorthand flag if main flag is empty
 	if *configFlag == "" && *cFlag != "" {

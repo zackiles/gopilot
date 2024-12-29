@@ -55,6 +55,7 @@ Here are the available flags:
 - `--one-shot` or `-o`: Disables chat history for this message. History is not passed as context to the LLM and is not saved.
 - `--with-context` or `-w`: Pass a string or one or more paths to text-based files (comma-separated). The contents will be extracted and used as additional context for the model. This is useful for tasks like analyzing or making changes to code files.
 - `--config` or `-c`: Specify a configuration file path. This overrides other configuration methods.
+- `--version` or `-v`: Show version information
 
 ### Output:
 

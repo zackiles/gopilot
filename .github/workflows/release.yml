@@ -45,7 +45,8 @@ jobs:
           GOARCH: ${{ matrix.arch }}
           CGO_ENABLED: 0
         run: |
-          go build -trimpath -ldflags="-s -w -X main.Version=${GITHUB_REF#refs/tags/}" -o "dist/gopilot-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.ext }}" ./cmd/main.go
+          VERSION=${GITHUB_REF#refs/tags/}
+          go build -trimpath -ldflags="-s -w -X main.Version=${VERSION}" -o "dist/gopilot-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.ext }}" ./cmd/main.go
           # Ensure Linux/macOS binaries are executable
           if [[ "${{ matrix.os }}" != "windows" ]]; then
             chmod +x "dist/gopilot-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.ext }}"
