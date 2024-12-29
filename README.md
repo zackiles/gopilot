@@ -150,10 +150,6 @@ Each configuration method is optional, and values provided through later methods
 2. Should the CLI support multiple configuration files for different providers or workflows?
 3. How will the CLI gracefully handle rate-limiting or API errors across different providers?
 
----
-
 ## Contribution
 
 Contributions are welcome. Please open an issue or pull request for any feature requests, bug fixes, or improvements.
-
----
