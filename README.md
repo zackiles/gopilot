@@ -18,6 +18,26 @@ This script will:
 - Verify the SHA256 checksum
 - Install it to your system's appropriate location
 
+### Windows Installation Note
+
+For Windows users, the install script requires one of the following:
+- Git Bash (recommended)
+- WSL (Windows Subsystem for Linux)
+- Cygwin
+- MSYS2
+
+To install using Git Bash (recommended):
+1. Open Git Bash
+2. Run the installation command:
+   ```bash
+   curl -sSL https://github.com/zacharyiles/gopilot/raw/main/install.sh | bash
+   ```
+3. If the installation directory is not in your PATH, you may need to add it manually:
+   - The default installation location is `%USERPROFILE%\AppData\Local\Microsoft\WindowsApps`
+   - You can add this to your PATH through System Properties > Advanced > Environment Variables
+
+Alternatively, Windows users can perform a manual installation by downloading the appropriate .exe file from the releases page.
+
 ## Usage
 
 Interact with AI models via the CLI using a prompt. Chat history is maintained by default and stored on disk. Structured prompts or text-based files are automatically detected and handled accordingly.

@@ -19,8 +19,39 @@ if [ "$(id -u)" -ne 0 ] && ! command -v sudo >/dev/null 2>&1; then
     exit 1
 fi
 
-# Determine OS and architecture
+# Improved OS detection for Windows
 OS="$(uname | tr '[:upper:]' '[:lower:]')"
+if [[ "$OS" != "linux" && "$OS" != "darwin" ]]; then
+    # Check for Windows more thoroughly
+    case "$(uname -s)" in
+        MINGW*|MSYS*|CYGWIN*)
+            OS="windows"
+            ;;
+        *)
+            if [[ "$OS" == *"windows"* ]]; then
+                OS="windows"
+            else
+                echo "Error: Unsupported operating system: $OS"
+                exit 1
+            fi
+            ;;
+    esac
+fi
+
+# Windows-specific adjustments
+if [ "$OS" = "windows" ]; then
+    # Use more reliable way to get user profile on Windows
+    INSTALL_DIR="$(cygpath "$USERPROFILE" 2>/dev/null || echo "$USERPROFILE")/AppData/Local/Microsoft/WindowsApps"
+    # Convert path separators for Windows
+    INSTALL_DIR=$(echo "$INSTALL_DIR" | sed 's/\\/\//g')
+    BINARY_NAME="gopilot-windows-${ARCH}.exe"  # Name of the release artifact
+    FINAL_NAME="gopilot.exe"  # Final name after installation
+else
+    INSTALL_DIR="/usr/local/bin"
+    BINARY_NAME="gopilot-${OS}-${ARCH}"
+    FINAL_NAME="gopilot"  # Final name after installation
+fi
+
 ARCH="$(uname -m)"
 
 # Map architecture names
@@ -34,30 +65,11 @@ case "${ARCH}" in
         ;;
 esac
 
-# Set binary name
-BINARY_NAME="gopilot-${OS}-${ARCH}"
-if [ "${OS}" = "windows" ]; then
-    BINARY_NAME="${BINARY_NAME}.exe"
-fi
-
-# Set installation directory based on OS
-case "${OS}" in
-    linux|darwin)
-        INSTALL_DIR="/usr/local/bin"
-        ;;
-    msys*|cygwin*|mingw*|windows*)
-        OS="windows"
-        # Use the user's home directory AppData folder for Windows
-        INSTALL_DIR="${USERPROFILE}/AppData/Local/Microsoft/WindowsApps"
-        ;;
-    *)
-        echo "Error: Unsupported operating system: ${OS}"
-        exit 1
-        ;;
-esac
-
 # Create installation directory if needed
-sudo mkdir -p "${INSTALL_DIR}"
+mkdir -p "${INSTALL_DIR}" || {
+    echo "Error: Failed to create installation directory"
+    exit 1
+}
 
 # Set GitHub repository
 REPO="zacharyiles/gopilot"
@@ -107,17 +119,50 @@ if ! sha256sum -c "${BINARY_NAME}.sha256"; then
     exit 1
 fi
 
-# Install binary
-echo "Installing GoPilot..."
-if ! sudo mv "${BINARY_NAME}" "${INSTALL_DIR}/gopilot"; then
-    echo "Error: Failed to install binary"
-    exit 1
+# Modify installation for Windows
+if [ "$OS" = "windows" ]; then
+    # Create directory without sudo on Windows
+    mkdir -p "${INSTALL_DIR}" || {
+        echo "Error: Failed to create installation directory"
+        exit 1
+    }
+    
+    # Install without sudo on Windows, renaming to gopilot.exe
+    mv "${TMP_DIR}/${BINARY_NAME}" "${INSTALL_DIR}/${FINAL_NAME}" || {
+        echo "Error: Failed to install binary. Make sure you have write permissions."
+        exit 1
+    }
+    
+    chmod +x "${INSTALL_DIR}/${FINAL_NAME}" || true  # chmod may not work on Windows
+    
+    # Verify PATH on Windows
+    if ! echo "$PATH" | tr ':' '\n' | grep -q "${INSTALL_DIR}"; then
+        echo "Warning: Installation directory is not in PATH"
+        echo "Please add the following directory to your PATH:"
+        echo "${INSTALL_DIR}"
+    fi
+else
+    # Unix installation
+    if ! sudo mv "${TMP_DIR}/${BINARY_NAME}" "${INSTALL_DIR}/${FINAL_NAME}"; then
+        echo "Error: Failed to install binary"
+        exit 1
+    fi
+
+    if ! sudo chmod +x "${INSTALL_DIR}/${FINAL_NAME}"; then
+        echo "Error: Failed to set executable permissions"
+        exit 1
+    fi
 fi
 
-if ! sudo chmod +x "${INSTALL_DIR}/gopilot"; then
-    echo "Error: Failed to set executable permissions"
-    exit 1
+# Verify installation
+if command -v gopilot >/dev/null 2>&1; then
+    echo "GoPilot ${VERSION} has been installed successfully!"
+    echo "You can now use it by running 'gopilot' from your terminal."
+else
+    echo "GoPilot has been installed to: ${INSTALL_DIR}"
+    if [ "$OS" = "windows" ]; then
+        echo "You may need to:"
+        echo "1. Close and reopen your terminal"
+        echo "2. Add the installation directory to your PATH if it's not already there"
+    fi
 fi
-
-echo "GoPilot ${VERSION} has been installed successfully!"
-echo "You can now use it by running 'gopilot' from anywhere in your terminal." 

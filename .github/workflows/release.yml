@@ -43,8 +43,10 @@ jobs:
           go-version: '1.22.3'
           cache: true
           
-      - name: Clean dist
-        run: rm -rf dist || true
+      - name: Clean workspace
+        run: |
+          rm -rf dist
+          mkdir -p dist
       
       - name: Build
         env:
@@ -53,11 +55,17 @@ jobs:
           CGO_ENABLED: 0
         run: |
           VERSION=${GITHUB_REF#refs/tags/}
-          mkdir -p dist
-          go build -trimpath -ldflags="-s -w -X main.Version=${VERSION}" -o "dist/gopilot-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.ext }}" ./cmd/main.go
-          # Ensure Linux/macOS binaries are executable
-          if [[ "${{ matrix.os }}" != "windows" ]]; then
-            chmod +x "dist/gopilot-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.ext }}"
+          echo "Building for ${{ matrix.os }}-${{ matrix.arch }}"
+          go build -trimpath -ldflags="-s -w -X main.Version=${VERSION}" -o "dist/gopilot-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.ext }}" ./cmd/main.go || {
+            echo "Build failed"
+            exit 1
+          }
+          
+          # Verify the binary exists and has correct name
+          if [[ ! -f "dist/gopilot-${{ matrix.os }}-${{ matrix.arch }}${{ matrix.ext }}" ]]; then
+            echo "Binary not found after build"
+            ls -la dist/
+            exit 1
           fi
           
       - name: Generate checksum
