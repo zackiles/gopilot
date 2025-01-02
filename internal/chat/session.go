@@ -128,3 +128,17 @@ func (s *Session) formatHistoryForProvider() []providers.Message {
 	}
 	return messages
 }
+
+func (s *Session) GetHistory() []Message {
+	return s.history
+}
+
+func (s *Session) SetHistory(history []providers.Message) {
+	s.history = make([]Message, len(history))
+	for i, msg := range history {
+		s.history[i] = Message{
+			Role:    msg.Role,
+			Content: msg.Content,
+		}
+	}
+}

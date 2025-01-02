@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 
+	"gopilot/internal/actions"
 	"gopilot/internal/chat"
 	"gopilot/internal/config"
 )
@@ -28,6 +29,7 @@ func main() {
 	wFlag := flag.String("w", "", "Additional context files (shorthand)")
 	configFlag := flag.String("config", "", "Configuration file path")
 	cFlag := flag.String("c", "", "Configuration file path (shorthand)")
+	actionFlag := flag.String("action", "", "Specify an action to process the input/output")
 
 	flag.Parse()
 
@@ -108,11 +110,41 @@ func main() {
 		OneShot: *oneShotFlag || *oFlag,
 	}
 
+	// Apply action if specified
+	var activeAction actions.Action
+	if *actionFlag != "" {
+		if action, exists := actions.Get(*actionFlag); exists {
+			activeAction = action
+		} else {
+			fmt.Printf("Warning: Action '%s' not found\n", *actionFlag)
+		}
+	}
+
+	// Modify input and history if action exists
+	if activeAction != nil {
+		var err error
+		input, session.history, err = activeAction.PreHook(input, session.formatHistoryForProvider())
+		if err != nil {
+			fmt.Printf("Error in action pre-hook: %v\n", err)
+			os.Exit(1)
+		}
+	}
+
 	// Get response
 	response, err := session.Send(input, opts)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 		os.Exit(1)
+	}
+
+	// Process response if action exists
+	if activeAction != nil {
+		var err error
+		response, err = activeAction.PostHook(response)
+		if err != nil {
+			fmt.Printf("Error in action post-hook: %v\n", err)
+			os.Exit(1)
+		}
 	}
 
 	fmt.Println(response)

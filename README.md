@@ -1,8 +1,12 @@
 # GoPilot: A Unified No-Frills LLM CLI in Go
 
-GoPilot is a simple, Golang-based CLI tool for interacting with a variety of AI models. It automatically maintains chat history for continuous and context-aware conversations, streamlining interactions without any extra setup. Users can easily choose from text, streaming, or structured input options. GoPilot supports a wide range of AI providers, allowing for seamless integration and quick results across different models, all with minimal configuration. Its simplicity and flexibility make it a perfect choice for developers seeking efficient AI integration directly from the terminal.
+GoPilot is the AI tool for Devops and Engineering teams. Seamlessly integerate with your codebases, release pipelines and team workflows to automate your typical workflows using the power of AI. GoPilot is like a DevOps engineer always on hand, being able to generate code, write documentation, configure environments, and even deploy your code. Comprised of a comprehensive suite of agentic "actions" that can be composed, extended, and triggered from anywhere, you can think of GoPilot as providing a suite of workflows like Github Actions, except with AI!
 
-## Installing
+GoPilot supports a wide range of AI providers, allowing for seamless integration and quick results across different models, all with minimal configuration. Its simplicity and flexibility make it a perfect choice for developers seeking efficient AI integration without all the bells and whistles.
+
+## Why GoPilot?
+
+The idea of GoPilot was formed at my time in large engineering teams like at HashiCorp, where myself and teamates would continually look to automate away toil be desiging and refining highly-determinsitic prompts to solve day-to-day tasks on engineering teams. Managing and using those prompts was tedius, even though the results of years tweaking them produced great results. We would've easily adopted a product to do this, but the market consits of mostly large frameworks and tools that are either: not specific to DevOps automations, not minimal enough to fit nicely in a pipeline or deployed to the edge, and not optimized in a way that produces highly deterministic and traceable results as it required for most DevOps tasks. Some light inspiration was drawn from [Aider](https://github.com/Aider-AI/aider) which can be thought of as the human and application-development focused version of GoPilot. GoPilot was carefully designed to work outside of a human-in-the-loop, and it's speciality is infrastructure, engineering standards, and solving toil.
 
 ### Quick Install
 
@@ -76,6 +80,7 @@ Here are the available flags:
 - `--with-context` or `-w`: Pass a string or one or more paths to text-based files (comma-separated). The contents will be extracted and used as additional context for the model. This is useful for tasks like analyzing or making changes to code files.
 - `--config` or `-c`: Specify a configuration file path. This overrides other configuration methods.
 - `--version` or `-v`: Show version information
+- `--action` or `-a`: Specify an action plugin to process inputs and outputs (e.g., --action=edit-code)
 
 ### Output:
 
@@ -109,6 +114,23 @@ Response:
     "temperature": "25 degrees"
   }
 }
+```
+
+## Actions
+
+Actions are the core of GoPilot. They represent discrete, composable, agentic workflows. Actions leverage the full GoPilot framework to accomplish a set of very specific AI-driven tasks, such as updating a README after a new commit to main, or reviewing a new PR, or generating a new client SDK after an API chanegs. Actions are purpose built to solve typical grunt work and tasks on engineering and Devops teams, but supercharge them with the power of AI. Actions are meant to be used in pipelines, automations, or as part of a local development workflow. Actions are meant to be highly deterministic and utilize structured inputs and outputs and are optimized to not require human intervention or triggering.
+
+NOTE: This project is still in early development and many planned actions are not yet implemented.
+
+### edit-code
+The `edit-code` action optimizes the interaction for code editing tasks. It:
+- Formats the AI's instructions to focus on code modifications
+- Returns only the relevant changed sections of code
+- Adds helpful comments explaining the changes
+
+Example usage:
+```bash
+gopilot "Update the error handling in main.go" --action=edit-code --with-context=main.go
 ```
 
 ## Configuration
